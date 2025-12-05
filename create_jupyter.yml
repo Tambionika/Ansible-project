@@ -1,0 +1,31 @@
+---
+- name: Create Jupyter VM
+  hosts: localhost
+  connection: local
+  roles:
+    - role: ansible-role-azure-iaas
+      azure_iaas_base_image: "ubuntu2204"
+      azure_iaas_vm_role: app
+      azure_iaas_vm_count: 1
+      azure_iaas_os_disk_size: 1024
+      azure_iaas_vm_sku: Standard_E2s_v3
+      azure_iaas_set_linux_password: true
+      azure_iaas_dns_registration_tag: true
+      azure_iaas_enable_shared_asgs: true
+      azure_iaas_requested_shared_service_asgs:
+        - UserToWebserver
+
+- name: Prep and provision Jupyter VM
+  hosts: [just_created]
+  vars:
+    azure_iaas_admin_user: cvx_admin_user
+    dev_machine_virtual_env_name: ".ansible-virtualenv"
+    dev_machine_virtual_env: "/home/cvx_admin_user/{{ dev_machine_virtual_env_name }}"
+    dev_ansible_version: "10.5.0"
+    branch: "story/7156382-ansible-fundamentals-training"
+  roles:
+    - role: ansible-role-prep-vm
+      become: true
+  tasks:
+    - name: Include provision tasks
+      include_tasks: provision_jupyter.yml

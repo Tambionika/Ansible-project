@@ -1,0 +1,5 @@
+---
+# tasks file for debug-role
+- name: Output debug-role variable
+  debug:
+    var: string_variable

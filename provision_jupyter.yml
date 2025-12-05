@@ -1,0 +1,134 @@
+---
+# These two tasks are needed so that the warnings found in the README do not show up when running playbooks on the Jupyter Notebook.
+
+- name: Create '/etc/ansible' directory
+  file:
+    path: /etc/ansible
+    state: directory
+  become: true
+
+- name: Add 'localhost' to the hosts file
+  lineinfile:
+    path: /etc/ansible/hosts
+    line: localhost
+    state: present
+    create: true
+  become: true
+
+# # # # # # # # # # # # # # # # # # # #
+
+- name: set the ip_address
+  set_fact:
+    ip_address: "{{ ansible_host }}"
+
+- name: Install package dependencies
+  package:
+    state: present
+    name:
+      - pandoc
+      - python3
+      - python3-venv
+      - python3-pip
+      - python3-dev
+      - run-one
+      - gcc
+      - git
+      - wget
+      - unzip
+      - nano
+      - neovim
+      - nodejs
+      - ca-certificates
+      - iproute2
+      - curl
+  become: true
+
+- name: Set virtual environment
+  command: python3 -m venv {{ dev_machine_virtual_env }}
+  args:
+    creates: "{{ dev_machine_virtual_env }}"
+
+- name: Create pip.conf file
+  copy:
+    dest: /etc/pip.conf
+    mode: "0644"
+    content: |
+      [global]
+      index-url = https://{{ cvx_artifactory_user }}:{{ cvx_artifactory_token }}@artifactory.chevron.com/api/pypi/pypi/simple
+      trusted-host = artifactory.chevron.com
+  no_log: true
+  become: true
+
+- name: Verify pip.conf exists
+  stat:
+    path: /etc/pip.conf
+  register: pip_conf_stat
+
+- debug:
+    var: pip_conf_stat.stat.exists
+
+- name: Install python dependencies
+  pip:
+    name: "{{ item }}"
+    virtualenv: "{{ dev_machine_virtual_env }}"
+  with_items:
+    - ansible=={{ dev_ansible_version }}
+    - jinja2
+    - netaddr
+    - pywinrm
+    - notebook
+    - nbclassic
+    - jupyterlab
+    - bash_kernel
+
+- name: Create jupyter config
+  file:
+    name: "~/.jupyter"
+    state: directory
+
+- name: Load the jupyter template file
+  template:
+    dest: ~/.jupyter/jupyter_notebook_config.py
+    src: jupyter_notebook_config.py.j2
+
+- name: Load jupyter.service file
+  become: true
+  template:
+    dest: /usr/lib/systemd/system/jupyter.service
+    src: jupyter.service.j2
+
+- name: Copy the Jupyter notebooks to the VM
+  copy:
+    src: "{{ playbook_dir }}/notebooks"
+    dest: "/home/{{ azure_iaas_admin_user }}/"
+    remote_src: false
+
+- name: Add aliases
+  blockinfile:
+    path: "~/.bashrc"
+    insertbefore: "# User specific aliases and functions"
+    block: |
+      lsn () { /bin/ls $1 || true; }
+      alias ls="lsn"
+      alias wpb="cd /home/cvx_admin_user/notebooks/playbooks; cat << ... >"
+
+- name: Install bash kernel
+  shell:
+    cmd: |
+      source {{ dev_machine_virtual_env }}/bin/activate
+      {{dev_machine_virtual_env}}/bin/python3 -m bash_kernel.install
+      echo "c.MultiKernelManager.default_kernel_name = 'bash'" >> /home/{{azure_iaas_admin_user}}/.jupyter/jupyter_notebook_config.py
+  args:
+    executable: /bin/bash
+
+- name: Restart and reload jupyter
+  systemd:
+    state: restarted
+    daemon_reload: true
+    enabled: true
+    name: jupyter
+  become: true
+
+- name: Output IP address at end of log
+  debug:
+    msg: "TO ACCESS JUPYTER LAB, ENTER  http://{{ ansible_host }}:8080 INTO YOUR BROWSER."

@@ -1,0 +1,25 @@
+---
+- name: install sosreport package
+  package:
+    name: sos
+    state: latest
+  become: true
+
+- name: run sosreport
+  command: "/sbin/sosreport -l"
+  register: sosreport_output
+  become: true
+  no_log: true
+
+- name: print the output
+  debug:
+    msg: "{{ sosreport_output.stdout_lines }}"
+  when: sosreport_debug
+
+- name: email me the results
+  mail:
+    host: localhost
+    port: 25
+    to: "{{ my_email_address }}"
+    subject: "SOS Report for {{ ansible_default_ipv4.address }} on {{ ansible_date_time.date }}"
+    body: "{{ sosreport_output.stdout_lines | to_nice_json }}"

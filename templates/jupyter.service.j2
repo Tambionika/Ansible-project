@@ -1,0 +1,16 @@
+[Unit]
+Description=Jupyter Lab
+
+[Service]
+Type=simple
+PIDFile=/run/jupyter.pid
+ExecStart=/home/cvx_admin_user/{{ dev_machine_virtual_env_name }}/bin/jupyter-lab --config=/home/cvx_admin_user/.jupyter/jupyter_notebook_config.py
+User=cvx_admin_user
+Group=cvx_admin_user
+WorkingDirectory=/home/cvx_admin_user/notebooks
+Restart=always
+RestartSec=10
+#KillMode=mixed
+
+[Install]
+WantedBy=multi-user.target

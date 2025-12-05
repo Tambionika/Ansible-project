@@ -1,0 +1,35 @@
+resources:
+  repositories:
+    - repository: pf
+      type: git
+      name: CVX-DevOps/ADOPipeline
+      ref: refs/tags/latest-stable
+
+parameters:
+  - name: deployEnvironment
+    displayName: Environment
+    type: string
+    # TODO - Exercise 0: Change dev## value to your assigned environment
+    default: dev17
+
+trigger: none
+
+variables:
+  common_ansible_vars: |
+    cvx_secure_logging: true
+
+stages:
+  - template: pipeline.yml@pf
+    parameters:
+      ${{ insert }}: ${{ parameters }} # DO NOT MODIFY
+      serviceId: 5043210
+      forceUpdate: false
+      projects:
+        - name: JupyterEnv
+          type: ansible
+          playbook: create_jupyter.yml
+          ansibleRetryAttempts: 0
+          forceInstallRoles: "roles/requirements.yml"
+          verbosity: -v
+          extraAnsibleVars: |
+            $(common_ansible_vars)

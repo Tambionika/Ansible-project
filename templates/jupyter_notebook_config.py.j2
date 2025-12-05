@@ -1,0 +1,23 @@
+# Configuration file for jupyter-notebook.
+import os
+import stat
+import subprocess
+from pathlib import Path
+
+from jupyter_core.paths import jupyter_data_dir
+
+c = get_config()  # noqa: F821
+
+
+## The IP address the notebook server will listen on.
+c.NotebookApp.ip = "*"
+
+c.NotebookApp.open_browser = False
+
+c.NotebookApp.port = 8080
+
+c.NotebookApp.terminals_enabled = False
+
+c.NotebookApp.token = ""
+# to output both image/svg+xml and application/pdf plot formats in the notebook file
+c.InlineBackend.figure_formats = {"png", "jpeg", "svg", "pdf"}
