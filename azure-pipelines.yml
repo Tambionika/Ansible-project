@@ -27,10 +27,14 @@ stages:
       projects:
         - name: Udacity
           type: ansible
-          playbook: create_jupyter.yml
+          playbook: main.yml
           ansibleRetryAttempts: 0
           forceInstallRoles: "roles/requirements.yml"
           verbosity: -v
           extraAnsibleVars: |
             $(common_ansible_vars)
+          project_name: Udacity
+          ado_repo_name: myorg/my-adf-repo
+          ado_repo_branch: main
+          location: southcentralus
 
