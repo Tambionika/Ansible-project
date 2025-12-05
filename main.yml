@@ -1,0 +1,26 @@
+---
+- name: Provision Azure Data Factory (ADF) and connect to Azure DevOps repo
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
+  # Si preferís, podés incluir aquí un vars_files que apunte a group_vars
+  vars:
+    project_name: "{{ project_name }}"
+    ado_repo_name: "{{ ado_repo_name }}"
+    ado_repo_branch: "{{ ado_repo_branch }}"
+    location: "{{ location | default('southcentralus') }}"
+
+  roles:
+    - role: ansible-role-azure-adf-v2
+      # Variables típicas del rol (ajustar según README del rol)
+      # Ejemplo: nombre de la instancia y ubicación
+      adf_project_name: "{{ project_name }}"
+      adf_location: "{{ location }}"
+
+    - role: ansible-role-azure-adf-deploy
+      # Variables para conectar ADF con ADO
+      adf_repo_name: "{{ ado_repo_name }}"
+      adf_repo_branch: "{{ ado_repo_branch }}"
+      adf_project_name: "{{ project_name }}"
+      adf_location: "{{ location }}"
