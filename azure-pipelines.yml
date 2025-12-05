@@ -25,7 +25,7 @@ stages:
       serviceId: 5043210
       forceUpdate: false
       projects:
-        - name: JupyterEnv
+        - name: Udacity
           type: ansible
           playbook: create_jupyter.yml
           ansibleRetryAttempts: 0
@@ -33,3 +33,4 @@ stages:
           verbosity: -v
           extraAnsibleVars: |
             $(common_ansible_vars)
+
